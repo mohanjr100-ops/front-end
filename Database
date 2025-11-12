@@ -1,0 +1,42 @@
+const video = document.getElementById('video');
+const markBtn = document.getElementById('markBtn');
+const nameInput = document.getElementById('name');
+const empInput = document.getElementById('empId');
+const attendanceList = document.getElementById('attendanceList');
+
+// Start camera
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => { video.srcObject = stream; })
+  .catch(err => alert('Camera access denied: ' + err));
+
+// Mark attendance
+markBtn.addEventListener('click', async () => {
+  const name = nameInput.value.trim();
+  const empId = empInput.value.trim();
+  if (!name || !empId) return alert('Enter name and ID');
+
+  const res = await fetch('/mark', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, empId })
+  });
+  const data = await res.json();
+  if (data.success) {
+    alert('Attendance marked for ' + name);
+    loadAttendance();
+  }
+});
+
+// Load attendance records
+async function loadAttendance() {
+  const res = await fetch('/attendance');
+  const list = await res.json();
+  attendanceList.innerHTML = '';
+  list.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = `${item.name} (${item.empId}) - ${item.time}`;
+    attendanceList.appendChild(li);
+  });
+}
+
+loadAttendance();
