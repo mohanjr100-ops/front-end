@@ -1,0 +1,36 @@
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+
+const app = express();
+const PORT = 3000;
+
+app.use(express.static('public'));
+app.use(express.json());
+
+const dataFile = path.join(__dirname, 'attendance.json');
+
+// API to mark attendance
+app.post('/mark', (req, res) => {
+  const { name, empId } = req.body;
+  const entry = { name, empId, time: new Date().toLocaleString() };
+
+  let data = [];
+  if (fs.existsSync(dataFile)) {
+    data = JSON.parse(fs.readFileSync(dataFile));
+  }
+  data.push(entry);
+  fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+  res.json({ success: true });
+});
+
+// API to view attendance
+app.get('/attendance', (req, res) => {
+  if (fs.existsSync(dataFile)) {
+    res.sendFile(dataFile);
+  } else {
+    res.json([]);
+  }
+});
+
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
